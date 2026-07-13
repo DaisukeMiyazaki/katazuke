@@ -59,6 +59,25 @@ export function outDegree(source: string, targets: Record<string, number>): numb
   return n;
 }
 
+// Reverse index of inbound mentions per target, in one O(total-links) pass over
+// resolvedLinks. The count values are Obsidian's per-target mention counts, so
+// summing them matches the backlink pane's "linked mentions" total. Media
+// sources and targets are excluded. Computing this once avoids the
+// O(notes^2) cost of calling getBacklinksForFile per note (which froze the UI).
+export function computeBacklinkCounts(links: LinkGraph): Map<string, number> {
+  const inbound = new Map<string, number>();
+  for (const source of Object.keys(links)) {
+    if (isMediaPath(source)) continue;
+    const targets = links[source];
+    for (const target of Object.keys(targets)) {
+      if (target === source) continue;
+      if (isMediaPath(target)) continue;
+      inbound.set(target, (inbound.get(target) ?? 0) + targets[target]);
+    }
+  }
+  return inbound;
+}
+
 export interface NoteInput {
   path: string;
   inDeg: number;

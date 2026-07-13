@@ -4,6 +4,7 @@ import {
   mergeSettings,
   isMediaPath,
   outDegree,
+  computeBacklinkCounts,
   scoreNote,
   rankNotes,
   NoteInput,
@@ -44,6 +45,19 @@ describe("outDegree", () => {
       "clip.mov": 1, // media excluded
     });
     expect(n).toBe(2);
+  });
+});
+
+describe("computeBacklinkCounts", () => {
+  it("sums inbound mentions per target, excluding media and self-links", () => {
+    const inbound = computeBacklinkCounts({
+      "a.md": { "c.md": 2, "img.png": 1 }, // a mentions c twice; image excluded
+      "b.md": { "c.md": 1, "b.md": 3 }, // b mentions c once; self-link ignored
+      "clip.mov": { "c.md": 9 }, // media source excluded entirely
+    });
+    expect(inbound.get("c.md")).toBe(3);
+    expect(inbound.has("img.png")).toBe(false);
+    expect(inbound.has("b.md")).toBe(false);
   });
 });
 
