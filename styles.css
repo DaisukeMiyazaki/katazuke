@@ -1,25 +1,59 @@
+/* Tone matched to Semantic Search: a comfortably wide modal, clean rows (no
+   card boxes), title-row with the metric pushed to the right, faint meta line. */
+
+.katazuke-modal {
+  width: 700px;
+  max-width: 90vw;
+}
+
+.katazuke-heading {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
 .katazuke-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 2px;
 }
 
-.katazuke-row {
-  display: flex;
-  flex-direction: column;
-  padding: 0.5rem 0.6rem;
-  border: 1px solid var(--background-modifier-border);
+.katazuke-result {
+  padding: 6px 8px;
   border-radius: 6px;
+  /* Never grow wider than the modal — long paths must not create horizontal
+     scroll on narrow screens. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.katazuke-result:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.katazuke-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .katazuke-title {
   font-weight: 600;
+  /* Let a long filename wrap instead of forcing the row wider than the modal. */
+  min-width: 0;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
+.katazuke-score {
+  flex-shrink: 0;
+  font-size: 0.75em;
+  color: var(--text-faint);
+}
+
 .katazuke-meta {
-  color: var(--text-muted);
   font-size: 0.8em;
-  margin-top: 0.15rem;
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
 }

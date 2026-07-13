@@ -98,12 +98,14 @@ class KatazukeModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
-    contentEl.createEl("h3", { text: "片付けの候補" });
+    this.modalEl.addClass("katazuke-modal");
+    contentEl.createEl("div", { cls: "katazuke-heading", text: "片付けの候補" });
     const list = contentEl.createEl("div", { cls: "katazuke-list" });
 
     for (const note of this.notes) {
-      const row = list.createEl("div", { cls: "katazuke-row" });
-      const link = row.createEl("a", {
+      const result = list.createEl("div", { cls: "katazuke-result" });
+      const titleRow = result.createEl("div", { cls: "katazuke-title-row" });
+      const link = titleRow.createEl("a", {
         text: note.path.replace(/\.md$/, ""),
         cls: "katazuke-title",
       });
@@ -112,9 +114,13 @@ class KatazukeModal extends Modal {
         this.app.workspace.openLinkText(note.path, "", false);
         this.close();
       });
-      row.createEl("span", {
+      titleRow.createEl("span", {
+        cls: "katazuke-score",
+        text: `採点 ${note.score.toFixed(1)}`,
+      });
+      result.createEl("div", {
         cls: "katazuke-meta",
-        text: `被リンク ${note.inDeg} ・ 発リンク ${note.outDeg} ・ ${Math.round(note.ageDays)}日 ・ 採点 ${note.score.toFixed(1)}`,
+        text: `被リンク ${note.inDeg} ・ 発リンク ${note.outDeg} ・ ${Math.round(note.ageDays)}日`,
       });
     }
   }
