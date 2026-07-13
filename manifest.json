@@ -1,0 +1,9 @@
+{
+  "id": "katazuke",
+  "name": "Katazuke",
+  "version": "0.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "肥大したノートと向き合うための整理支援。リンク次数×鮮度で対象を採点し、一件モードと数件モードで提示する。",
+  "author": "DaisukeMiyazaki",
+  "isDesktopOnly": false
+}
