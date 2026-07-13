@@ -33,32 +33,30 @@ export function mergeSettings(
 // { [sourcePath]: { [targetPath]: linkCount } }
 export type LinkGraph = Record<string, Record<string, number>>;
 
-export interface Degree {
-  inDeg: number;
-  outDeg: number;
+// Binary attachments that shouldn't count as note-to-note connections.
+export const MEDIA_EXTENSIONS = new Set([
+  "png", "jpg", "jpeg", "gif", "bmp", "svg", "webp", "avif", "ico",
+  "mp4", "mov", "mkv", "webm", "ogv", "avi", "m4v",
+  "mp3", "wav", "flac", "ogg", "m4a", "aac",
+  "pdf",
+]);
+
+export function isMediaPath(path: string): boolean {
+  const dot = path.lastIndexOf(".");
+  if (dot < 0) return false;
+  return MEDIA_EXTENSIONS.has(path.slice(dot + 1).toLowerCase());
 }
 
-// Count distinct out-links per note and distinct in-links (backlinks) per note.
-export function computeDegrees(links: LinkGraph): Map<string, Degree> {
-  const deg = new Map<string, Degree>();
-  const ensure = (path: string): Degree => {
-    let d = deg.get(path);
-    if (!d) {
-      d = { inDeg: 0, outDeg: 0 };
-      deg.set(path, d);
-    }
-    return d;
-  };
-  for (const source of Object.keys(links)) {
-    const targets = links[source];
-    const distinct = Object.keys(targets);
-    ensure(source).outDeg += distinct.length;
-    for (const target of distinct) {
-      if (target === source) continue; // ignore self-links
-      ensure(target).inDeg += 1;
-    }
+// Distinct out-links from one source's resolvedLinks entry, excluding media
+// targets and self-links.
+export function outDegree(source: string, targets: Record<string, number>): number {
+  let n = 0;
+  for (const target of Object.keys(targets)) {
+    if (target === source) continue;
+    if (isMediaPath(target)) continue;
+    n += 1;
   }
-  return deg;
+  return n;
 }
 
 export interface NoteInput {
@@ -71,6 +69,8 @@ export interface NoteInput {
 
 export interface ScoredNote {
   path: string;
+  inDeg: number;
+  outDeg: number;
   degree: number;
   ageDays: number;
   score: number;
@@ -91,7 +91,14 @@ export function scoreNote(
     ? settings.freshnessHalfLifeDays
     : 1;
   const score = degree * (1 + ageDays / half);
-  return { path: note.path, degree, ageDays, score };
+  return {
+    path: note.path,
+    inDeg: note.inDeg,
+    outDeg: note.outDeg,
+    degree,
+    ageDays,
+    score,
+  };
 }
 
 // Rank candidates: drop hubs and low-degree notes, sort by score descending.

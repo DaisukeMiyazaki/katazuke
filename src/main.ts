@@ -12,7 +12,8 @@ import {
   KatazukeSettings,
   DEFAULT_SETTINGS,
   mergeSettings,
-  computeDegrees,
+  outDegree,
+  isMediaPath,
   rankNotes,
   NoteInput,
   ScoredNote,
@@ -40,23 +41,41 @@ export default class KatazukePlugin extends Plugin {
   }
 
   // Build note inputs from the resolved link graph + file mtime + tags.
+  // Backlinks come from getBacklinksForFile so the count matches Obsidian's
+  // backlink pane (total mentions, embeds included); media links are excluded.
   private collect(): NoteInput[] {
     const links = this.app.metadataCache.resolvedLinks;
-    const degrees = computeDegrees(links);
     const hubTag = normalizeTag(this.settings.hubTag);
 
     const inputs: NoteInput[] = [];
     for (const file of this.app.vault.getMarkdownFiles()) {
-      const d = degrees.get(file.path) ?? { inDeg: 0, outDeg: 0 };
       inputs.push({
         path: file.path,
-        inDeg: d.inDeg,
-        outDeg: d.outDeg,
+        inDeg: this.backlinkCount(file),
+        outDeg: outDegree(file.path, links[file.path] ?? {}),
         mtimeMs: file.stat.mtime,
         hasHubTag: this.fileHasTag(file, hubTag),
       });
     }
     return inputs;
+  }
+
+  // Count backlinks the same way Obsidian's pane does: total linked mentions
+  // across source notes, excluding any media source.
+  private backlinkCount(file: TFile): number {
+    // getBacklinksForFile is not in the public typings.
+    const mc = this.app.metadataCache as unknown as {
+      getBacklinksForFile?: (f: TFile) => { data: unknown };
+    };
+    const result = mc.getBacklinksForFile?.(file);
+    if (!result) return 0;
+
+    let count = 0;
+    for (const [source, refs] of backlinkEntries(result.data)) {
+      if (isMediaPath(source)) continue;
+      count += Array.isArray(refs) ? refs.length : 0;
+    }
+    return count;
   }
 
   private fileHasTag(file: TFile, hubTag: string): boolean {
@@ -89,6 +108,15 @@ function normalizeTag(tag: string): string {
   return tag.replace(/^#/, "").trim().toLowerCase();
 }
 
+// getBacklinksForFile's `.data` is a Map in current Obsidian and a plain object
+// in older builds; normalize both to [sourcePath, refs] pairs.
+function backlinkEntries(data: unknown): [string, unknown][] {
+  if (!data) return [];
+  if (data instanceof Map) return Array.from(data.entries());
+  if (typeof data === "object") return Object.entries(data as Record<string, unknown>);
+  return [];
+}
+
 class KatazukeModal extends Modal {
   constructor(app: App, private notes: ScoredNote[]) {
     super(app);
@@ -112,7 +140,7 @@ class KatazukeModal extends Modal {
       });
       row.createEl("span", {
         cls: "katazuke-meta",
-        text: `次数 ${note.degree} ・ ${Math.round(note.ageDays)}日 ・ 採点 ${note.score.toFixed(1)}`,
+        text: `被リンク ${note.inDeg} ・ 発リンク ${note.outDeg} ・ ${Math.round(note.ageDays)}日 ・ 採点 ${note.score.toFixed(1)}`,
       });
     }
   }

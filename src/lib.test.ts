@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   DEFAULT_SETTINGS,
   mergeSettings,
-  computeDegrees,
+  isMediaPath,
+  outDegree,
   scoreNote,
   rankNotes,
   NoteInput,
@@ -23,15 +24,26 @@ describe("mergeSettings", () => {
   });
 });
 
-describe("computeDegrees", () => {
-  it("counts out-links and back-links, ignoring self-links", () => {
-    const deg = computeDegrees({
-      "a.md": { "b.md": 1, "c.md": 2, "a.md": 1 },
-      "b.md": { "c.md": 1 },
+describe("isMediaPath", () => {
+  it("flags media attachments, not notes", () => {
+    expect(isMediaPath("assets/photo.PNG")).toBe(true);
+    expect(isMediaPath("clip.mov")).toBe(true);
+    expect(isMediaPath("scan.pdf")).toBe(true);
+    expect(isMediaPath("notes/idea.md")).toBe(false);
+    expect(isMediaPath("noext")).toBe(false);
+  });
+});
+
+describe("outDegree", () => {
+  it("counts distinct non-media targets, ignoring self-links", () => {
+    const n = outDegree("a.md", {
+      "b.md": 1,
+      "c.md": 2,
+      "a.md": 1, // self-link ignored
+      "img.png": 1, // media excluded
+      "clip.mov": 1, // media excluded
     });
-    expect(deg.get("a.md")).toEqual({ inDeg: 0, outDeg: 3 });
-    expect(deg.get("b.md")).toEqual({ inDeg: 1, outDeg: 1 });
-    expect(deg.get("c.md")).toEqual({ inDeg: 2, outDeg: 0 });
+    expect(n).toBe(2);
   });
 });
 
