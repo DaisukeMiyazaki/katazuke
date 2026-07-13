@@ -91,6 +91,15 @@ modal, settings).
   "theme" at once, not isolated notes.
 - Record the split / keep decision in place, for a more lint-like workflow.
 
+## Support
+
+Katazuke is free and open source (MIT) for everyone, personal and commercial
+use alike. If it earns its place in your commercial workflow, please consider
+sponsoring its upkeep — it is entirely voluntary, but it keeps the plugin
+maintained.
+
+- [GitHub Sponsors](https://github.com/sponsors/DaisukeMiyazaki)
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
