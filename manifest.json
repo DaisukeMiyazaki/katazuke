@@ -3,7 +3,7 @@
   "name": "Katazuke",
   "version": "0.1.5",
   "minAppVersion": "1.0.0",
-  "description": "肥大したノートと向き合うための整理支援。リンク次数×鮮度で対象を採点し、一件モードと数件モードで提示する。",
+  "description": "Surface over-connected, stale notes by link degree and freshness so you can tidy the ones that grew sprawling, one or several at a time.",
   "author": "DaisukeMiyazaki",
   "authorUrl": "https://github.com/DaisukeMiyazaki",
   "fundingUrl": "https://github.com/sponsors/DaisukeMiyazaki",
