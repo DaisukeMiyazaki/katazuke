@@ -1,5 +1,6 @@
 import {
   App,
+  Keymap,
   Modal,
   Notice,
   Plugin,
@@ -99,7 +100,10 @@ class KatazukeModal extends Modal {
   onOpen() {
     const { contentEl } = this;
     this.modalEl.addClass("katazuke-modal");
-    contentEl.createEl("div", { cls: "katazuke-heading", text: "片付けの候補" });
+    contentEl.createEl("div", {
+      cls: "katazuke-heading",
+      text: "片付けの候補（Cmd/Ctrl+クリックで新しいタブを開き、このまま留まる）",
+    });
     const list = contentEl.createEl("div", { cls: "katazuke-list" });
 
     for (const note of this.notes) {
@@ -111,8 +115,12 @@ class KatazukeModal extends Modal {
       });
       link.addEventListener("click", (e) => {
         e.preventDefault();
-        this.app.workspace.openLinkText(note.path, "", false);
-        this.close();
+        // Browser-like: plain click opens in place and closes the modal;
+        // Cmd/Ctrl+click opens in a new tab and keeps the modal open so you
+        // can keep triaging candidates.
+        const paneType = Keymap.isModEvent(e); // "tab" when mod held, else false
+        this.app.workspace.openLinkText(note.path, "", paneType);
+        if (!paneType) this.close();
       });
       titleRow.createEl("span", {
         cls: "katazuke-score",
