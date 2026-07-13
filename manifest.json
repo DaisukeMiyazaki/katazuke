@@ -1,7 +1,7 @@
 {
   "id": "katazuke",
   "name": "Katazuke",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "minAppVersion": "1.0.0",
   "description": "Surface over-connected, stale notes by link degree and freshness so you can tidy the ones that grew sprawling, one or several at a time.",
   "author": "DaisukeMiyazaki",

@@ -8,6 +8,7 @@ import {
   Setting,
   TFile,
   getAllTags,
+  getLanguage,
 } from "obsidian";
 import {
   KatazukeSettings,
@@ -29,16 +30,16 @@ export default class KatazukePlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
-    this.strings = STRINGS[pickLang(window.localStorage.getItem("language"))];
+    this.strings = STRINGS[pickLang(getLanguage())];
 
     this.addCommand({
-      id: "katazuke-one",
+      id: "confront-one",
       name: this.strings.confrontOne,
       callback: () => this.showRanked(1),
     });
 
     this.addCommand({
-      id: "katazuke-batch",
+      id: "confront-several",
       name: this.strings.confrontSeveral,
       callback: () => this.showRanked(this.settings.batchSize),
     });
@@ -85,7 +86,8 @@ export default class KatazukePlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = mergeSettings(await this.loadData());
+    const data = (await this.loadData()) as Partial<KatazukeSettings> | null;
+    this.settings = mergeSettings(data);
   }
 
   async saveSettings() {
@@ -128,7 +130,7 @@ class KatazukeModal extends Modal {
         // Cmd/Ctrl+click opens in a new tab and keeps the modal open so you
         // can keep triaging candidates.
         const paneType = Keymap.isModEvent(e); // "tab" when mod held, else false
-        this.app.workspace.openLinkText(note.path, "", paneType);
+        void this.app.workspace.openLinkText(note.path, "", paneType);
         if (!paneType) this.close();
       });
       const s = this.strings;
