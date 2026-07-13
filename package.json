@@ -1,17 +1,21 @@
 {
   "name": "katazuke",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "description": "Obsidian plugin to confront over-connected notes by degree x freshness",
   "scripts": {
     "build": "node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@typescript-eslint/parser": "^8.63.0",
     "esbuild": "^0.25.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-obsidianmd": "^0.4.1",
     "obsidian": "^1.7.2",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"

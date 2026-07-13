@@ -54,16 +54,22 @@ gesture as a browser.
 | Batch size | `7` | How many notes "Confront several" shows. |
 | Minimum degree | `5` | Notes below this link count are never surfaced. |
 
+Requires Obsidian 1.8.7 or newer.
+
 ## Installation
 
 ### Community plugins
 
-Not yet in the community plugin directory (submission in progress).
+Available in the
+[Obsidian community plugin directory](https://community.obsidian.md/plugins/katazuke).
+In Obsidian, go to Settings → Community plugins → Browse, search for "Katazuke",
+install, and enable.
 
 ### BRAT (beta)
 
-Install [BRAT](https://github.com/TfTHacker/obsidian42-brat), then add this
-repository (`DaisukeMiyazaki/katazuke`) as a beta plugin.
+To track pre-release builds, install
+[BRAT](https://github.com/TfTHacker/obsidian42-brat) and add this repository
+(`DaisukeMiyazaki/katazuke`) as a beta plugin.
 
 ### Manual
 
@@ -72,12 +78,25 @@ Download `main.js`, `manifest.json`, and `styles.css` from the
 vault's `.obsidian/plugins/katazuke/` folder, then enable the plugin in
 Settings → Community plugins.
 
+## What it accesses
+
+Katazuke is read-only and works entirely offline.
+
+- Reads the paths of every note in the vault, the resolved link graph, each
+  note's last-modified time, and note tags — all needed to score notes by
+  degree and freshness.
+- Makes no network requests. Nothing leaves your vault.
+- Does not read or write the clipboard, and never modifies your notes.
+- The only data it writes is its own settings, through Obsidian's plugin data
+  API.
+
 ## Development
 
 ```
 npm install
 npm test        # vitest — pure scoring/graph logic
 npm run typecheck
+npm run lint    # eslint-plugin-obsidianmd — mirrors the directory's review
 npm run build   # bundles main.js
 ```
 

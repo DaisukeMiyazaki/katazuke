@@ -111,15 +111,15 @@ class KatazukeModal extends Modal {
   onOpen() {
     const { contentEl } = this;
     this.modalEl.addClass("katazuke-modal");
-    contentEl.createEl("div", {
+    contentEl.createDiv({
       cls: "katazuke-heading",
       text: this.strings.heading,
     });
-    const list = contentEl.createEl("div", { cls: "katazuke-list" });
+    const list = contentEl.createDiv({ cls: "katazuke-list" });
 
     for (const note of this.notes) {
-      const result = list.createEl("div", { cls: "katazuke-result" });
-      const titleRow = result.createEl("div", { cls: "katazuke-title-row" });
+      const result = list.createDiv({ cls: "katazuke-result" });
+      const titleRow = result.createDiv({ cls: "katazuke-title-row" });
       const link = titleRow.createEl("a", {
         text: note.path.replace(/\.md$/, ""),
         cls: "katazuke-title",
@@ -134,11 +134,11 @@ class KatazukeModal extends Modal {
         if (!paneType) this.close();
       });
       const s = this.strings;
-      titleRow.createEl("span", {
+      titleRow.createSpan({
         cls: "katazuke-score",
         text: `${s.scoreLabel} ${note.score.toFixed(1)}`,
       });
-      result.createEl("div", {
+      result.createDiv({
         cls: "katazuke-meta",
         text: `${s.backlinksLabel} ${note.inDeg} ・ ${s.outgoingLabel} ${note.outDeg} ・ ${Math.round(note.ageDays)}${s.daysSuffix}`,
       });

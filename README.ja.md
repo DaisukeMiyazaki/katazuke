@@ -2,6 +2,8 @@
 
 過去の自分が残した、リンクが肥大したノートと向き合うための Obsidian プラグイン。
 
+Obsidian 1.8.7 以上が必要。[コミュニティプラグイン一覧](https://community.obsidian.md/plugins/katazuke)から、設定 → コミュニティプラグイン → 閲覧で「Katazuke」を検索して導入できる。
+
 ## 考え方
 
 - 結合しすぎたノートは不健全な兆候になりうる。ただしグラフビューでは見つけにくい。
@@ -28,12 +30,22 @@ score = degree * (1 + ageDays / freshnessHalfLifeDays)
 - 数件モードの件数（既定 7）
 - 最小次数（既定 5）
 
+## アクセスするもの
+
+読み取り専用で、完全にオフラインで動作する。
+
+- vault 内の全ノートのパス、解決済みリンクグラフ、各ノートの最終更新時刻、タグを読む（次数×鮮度の採点に必要）。
+- 通信は一切しない。vault の外へ何も送らない。
+- クリップボードは読み書きせず、ノートも改変しない。
+- 書き込むのは自身の設定のみで、Obsidian のプラグインデータ API 経由。
+
 ## 開発
 
 ```
 npm install
 npm test        # vitest（純ロジックのテスト）
 npm run typecheck
+npm run lint    # eslint-plugin-obsidianmd（公式レビューを再現）
 npm run build   # main.js を生成
 ```
 
