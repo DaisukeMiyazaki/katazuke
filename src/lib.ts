@@ -132,3 +132,71 @@ export function rankNotes(
     .map((n) => scoreNote(n, settings, nowMs))
     .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path));
 }
+
+// --- Localization ---------------------------------------------------------
+// UI defaults to English (for the community plugin listing). When Obsidian's
+// language is Japanese, Japanese strings are shown instead.
+
+export type Lang = "en" | "ja";
+
+// Obsidian stores its UI language in localStorage under "language" (e.g. "ja").
+export function pickLang(raw: string | null | undefined): Lang {
+  return raw && raw.toLowerCase().startsWith("ja") ? "ja" : "en";
+}
+
+export interface Strings {
+  confrontOne: string;
+  confrontSeveral: string;
+  heading: string;
+  noResults: string;
+  scoreLabel: string;
+  backlinksLabel: string;
+  outgoingLabel: string;
+  daysSuffix: string;
+  hubTagName: string;
+  hubTagDesc: string;
+  halfLifeName: string;
+  halfLifeDesc: string;
+  batchSizeName: string;
+  minDegreeName: string;
+  minDegreeDesc: string;
+}
+
+export const STRINGS: Record<Lang, Strings> = {
+  en: {
+    confrontOne: "Confront one note",
+    confrontSeveral: "Confront several notes",
+    heading:
+      "Notes to tidy (Cmd/Ctrl+click opens a new tab and keeps this open)",
+    noResults: "No notes to confront were found.",
+    scoreLabel: "Score",
+    backlinksLabel: "Backlinks",
+    outgoingLabel: "Outgoing",
+    daysSuffix: "d",
+    hubTagName: "Hub exclusion tag",
+    hubTagDesc:
+      "Notes with this tag are treated as intentional hubs and excluded.",
+    halfLifeName: "Freshness half-life (days)",
+    halfLifeDesc: "After this many days untouched, a note's score doubles.",
+    batchSizeName: "Batch size",
+    minDegreeName: "Minimum degree",
+    minDegreeDesc: "Notes below this link count are never surfaced.",
+  },
+  ja: {
+    confrontOne: "一件と向き合う",
+    confrontSeveral: "数件と向き合う",
+    heading: "片付けの候補（Cmd/Ctrl+クリックで新しいタブを開き、このまま留まる）",
+    noResults: "向き合う対象が見つかりませんでした",
+    scoreLabel: "採点",
+    backlinksLabel: "被リンク",
+    outgoingLabel: "発リンク",
+    daysSuffix: "日",
+    hubTagName: "ハブ除外タグ",
+    hubTagDesc: "意図的な目次ノートに付けるタグ。候補から除外する。",
+    halfLifeName: "鮮度の半減期（日）",
+    halfLifeDesc: "この日数だけ放置されると採点が2倍になる。",
+    batchSizeName: "数件モードの件数",
+    minDegreeName: "最小次数",
+    minDegreeDesc: "この次数未満のノートは候補にしない。",
+  },
+};

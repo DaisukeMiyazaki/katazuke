@@ -7,6 +7,7 @@ import {
   computeBacklinkCounts,
   scoreNote,
   rankNotes,
+  pickLang,
   NoteInput,
 } from "./lib";
 
@@ -45,6 +46,17 @@ describe("outDegree", () => {
       "clip.mov": 1, // media excluded
     });
     expect(n).toBe(2);
+  });
+});
+
+describe("pickLang", () => {
+  it("defaults to English, uses Japanese only for ja locales", () => {
+    expect(pickLang(null)).toBe("en");
+    expect(pickLang("")).toBe("en");
+    expect(pickLang("en")).toBe("en");
+    expect(pickLang("fr")).toBe("en");
+    expect(pickLang("ja")).toBe("ja");
+    expect(pickLang("ja-JP")).toBe("ja");
   });
 });
 

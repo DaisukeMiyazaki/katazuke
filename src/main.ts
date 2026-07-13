@@ -18,23 +18,28 @@ import {
   rankNotes,
   NoteInput,
   ScoredNote,
+  Strings,
+  STRINGS,
+  pickLang,
 } from "./lib";
 
 export default class KatazukePlugin extends Plugin {
   settings: KatazukeSettings = DEFAULT_SETTINGS;
+  strings: Strings = STRINGS.en;
 
   async onload() {
     await this.loadSettings();
+    this.strings = STRINGS[pickLang(window.localStorage.getItem("language"))];
 
     this.addCommand({
       id: "katazuke-one",
-      name: "一件と向き合う",
+      name: this.strings.confrontOne,
       callback: () => this.showRanked(1),
     });
 
     this.addCommand({
       id: "katazuke-batch",
-      name: "数件と向き合う",
+      name: this.strings.confrontSeveral,
       callback: () => this.showRanked(this.settings.batchSize),
     });
 
@@ -73,10 +78,10 @@ export default class KatazukePlugin extends Plugin {
   private showRanked(limit: number) {
     const ranked = rankNotes(this.collect(), this.settings, Date.now());
     if (ranked.length === 0) {
-      new Notice("向き合う対象が見つかりませんでした");
+      new Notice(this.strings.noResults);
       return;
     }
-    new KatazukeModal(this.app, ranked.slice(0, limit)).open();
+    new KatazukeModal(this.app, ranked.slice(0, limit), this.strings).open();
   }
 
   async loadSettings() {
@@ -93,7 +98,11 @@ function normalizeTag(tag: string): string {
 }
 
 class KatazukeModal extends Modal {
-  constructor(app: App, private notes: ScoredNote[]) {
+  constructor(
+    app: App,
+    private notes: ScoredNote[],
+    private strings: Strings,
+  ) {
     super(app);
   }
 
@@ -102,7 +111,7 @@ class KatazukeModal extends Modal {
     this.modalEl.addClass("katazuke-modal");
     contentEl.createEl("div", {
       cls: "katazuke-heading",
-      text: "片付けの候補（Cmd/Ctrl+クリックで新しいタブを開き、このまま留まる）",
+      text: this.strings.heading,
     });
     const list = contentEl.createEl("div", { cls: "katazuke-list" });
 
@@ -122,13 +131,14 @@ class KatazukeModal extends Modal {
         this.app.workspace.openLinkText(note.path, "", paneType);
         if (!paneType) this.close();
       });
+      const s = this.strings;
       titleRow.createEl("span", {
         cls: "katazuke-score",
-        text: `採点 ${note.score.toFixed(1)}`,
+        text: `${s.scoreLabel} ${note.score.toFixed(1)}`,
       });
       result.createEl("div", {
         cls: "katazuke-meta",
-        text: `被リンク ${note.inDeg} ・ 発リンク ${note.outDeg} ・ ${Math.round(note.ageDays)}日`,
+        text: `${s.backlinksLabel} ${note.inDeg} ・ ${s.outgoingLabel} ${note.outDeg} ・ ${Math.round(note.ageDays)}${s.daysSuffix}`,
       });
     }
   }
@@ -145,11 +155,12 @@ class KatazukeSettingTab extends PluginSettingTab {
 
   display() {
     const { containerEl } = this;
+    const s = this.plugin.strings;
     containerEl.empty();
 
     new Setting(containerEl)
-      .setName("ハブ除外タグ")
-      .setDesc("意図的な目次ノートに付けるタグ。候補から除外する。")
+      .setName(s.hubTagName)
+      .setDesc(s.hubTagDesc)
       .addText((t) =>
         t
           .setValue(this.plugin.settings.hubTag)
@@ -160,8 +171,8 @@ class KatazukeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("鮮度の半減期（日）")
-      .setDesc("この日数だけ放置されると採点が2倍になる。")
+      .setName(s.halfLifeName)
+      .setDesc(s.halfLifeDesc)
       .addText((t) =>
         t
           .setValue(String(this.plugin.settings.freshnessHalfLifeDays))
@@ -175,7 +186,7 @@ class KatazukeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("数件モードの件数")
+      .setName(s.batchSizeName)
       .addText((t) =>
         t
           .setValue(String(this.plugin.settings.batchSize))
@@ -189,8 +200,8 @@ class KatazukeSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("最小次数")
-      .setDesc("この次数未満のノートは候補にしない。")
+      .setName(s.minDegreeName)
+      .setDesc(s.minDegreeDesc)
       .addText((t) =>
         t
           .setValue(String(this.plugin.settings.minDegree))
