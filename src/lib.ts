@@ -14,13 +14,38 @@ export interface KatazukeSettings {
   batchSize: number;
   // Notes below this degree are never surfaced.
   minDegree: number;
+  // Mountain lens: a note untouched for at least this many days counts as
+  // "clutter" (たまり) — the digital equivalent of dust settling on it.
+  clutterStaleDays: number;
+  // How many grains one pile holds. A pile is ONE sitting's worth — small
+  // enough to finish, so every session ends with the mound gone, not with a
+  // dent in an endless mountain.
+  pileSize: number;
+  // Mountain colors: follow Obsidian's theme, or force light/dark paper.
+  mountainTheme: MountainTheme;
+  // Draw the suggested (red) grains in the user's Obsidian accent color.
+  useAccentColor: boolean;
+  // Notes under these folder paths never enter the mountain or the ranked
+  // candidates — templates, archives, other people's imports.
+  excludedFolders: string[];
+  // Vault path of the tidying log — the source of truth for history. One line
+  // is appended per judged note, so it syncs and merges well across devices.
+  logPath: string;
 }
+
+export type MountainTheme = "auto" | "light" | "dark";
 
 export const DEFAULT_SETTINGS: KatazukeSettings = {
   hubTag: "hub",
   freshnessHalfLifeDays: 90,
   batchSize: 7,
   minDegree: 5,
+  clutterStaleDays: 90,
+  pileSize: 10,
+  mountainTheme: "auto",
+  useAccentColor: false,
+  excludedFolders: [],
+  logPath: "katazuke-log.md",
 };
 
 export function mergeSettings(
@@ -45,6 +70,16 @@ export function isMediaPath(path: string): boolean {
   const dot = path.lastIndexOf(".");
   if (dot < 0) return false;
   return MEDIA_EXTENSIONS.has(path.slice(dot + 1).toLowerCase());
+}
+
+// True when `path` sits inside any of `folders` (or IS one of them). Matches
+// whole path segments only — excluding "diary" must not catch "diary-old/x.md".
+export function isUnderFolder(path: string, folders: string[]): boolean {
+  return folders.some((f) => {
+    if (!f) return false;
+    const prefix = f.endsWith("/") ? f : f + "/";
+    return path === f || path.startsWith(prefix);
+  });
 }
 
 // Distinct out-links from one source's resolvedLinks entry, excluding media
@@ -133,6 +168,87 @@ export function rankNotes(
     .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path));
 }
 
+// --- Mountain lens (たまり) -------------------------------------------------
+// A different way to look at the vault. Instead of over-connected sprawl, this
+// surfaces the opposite failure: notes that connect to nothing and were left
+// untouched — orphaned drafts gathering dust. Physical clutter presses on you
+// because it costs space; digital notes cost nothing, so "last touched" is the
+// only honest signal of neglect. Each qualifying note becomes one dot in the
+// mountain view; judging it (keep / shelve / drop) removes the dot and the
+// mound settles lower.
+
+export interface ClutterNote {
+  path: string;
+  ageDays: number;
+}
+
+// Orphans (zero inbound + outbound links) that have been untouched for at least
+// `staleDays`. Ordering is left to the caller; the layout re-sorts by age.
+export function selectClutter(
+  notes: NoteInput[],
+  nowMs: number,
+  staleDays: number,
+): ClutterNote[] {
+  const out: ClutterNote[] = [];
+  for (const n of notes) {
+    if (n.inDeg + n.outDeg !== 0) continue; // orphans only
+    const ageDays = Math.max(0, (nowMs - n.mtimeMs) / MS_PER_DAY);
+    if (ageDays < staleDays) continue;
+    out.push({ path: n.path, ageDays });
+  }
+  return out;
+}
+
+// --- Tidying log -----------------------------------------------------------
+// The log is a plain markdown file in the vault: one `YYYY-MM-DD path` line
+// per judged note. Append-only lines survive sync merges, and the vault file
+// is the single source of truth every device reads its history from.
+
+export interface TidyHistory {
+  total: number;
+  byDay: Record<string, number>;
+}
+
+export function localIso(d: Date): string {
+  const p = (x: number) => String(x).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+export function formatLogLine(day: string, path: string): string {
+  return `${day} ${path}\n`;
+}
+
+// Count judged notes per day. Anything that doesn't look like a log line
+// (headers, blanks, stray edits) is ignored rather than fatal.
+export function parseLog(content: string): TidyHistory {
+  const byDay: Record<string, number> = {};
+  let total = 0;
+  for (const line of content.split(/\r?\n/)) {
+    const m = /^(\d{4}-\d{2}-\d{2})\s+\S/.exec(line);
+    if (!m) continue;
+    byDay[m[1]] = (byDay[m[1]] ?? 0) + 1;
+    total++;
+  }
+  return { total, byDay };
+}
+
+// The trailing `n` days ending at `todayIso`, zero-filled — chart-ready.
+export function lastNDays(
+  byDay: Record<string, number>,
+  n: number,
+  todayIso: string,
+): { day: string; count: number }[] {
+  const out: { day: string; count: number }[] = [];
+  const base = new Date(`${todayIso}T00:00:00`);
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(base);
+    d.setDate(d.getDate() - i);
+    const iso = localIso(d);
+    out.push({ day: iso, count: byDay[iso] ?? 0 });
+  }
+  return out;
+}
+
 // --- Localization ---------------------------------------------------------
 // UI defaults to English (for the community plugin listing). When Obsidian's
 // language is Japanese, Japanese strings are shown instead.
@@ -160,6 +276,30 @@ export interface Strings {
   batchSizeName: string;
   minDegreeName: string;
   minDegreeDesc: string;
+  openMountain: string;
+  mountainTitle: string;
+  mountainEmpty: string;
+  mountainCleared: string;
+  staleDaysName: string;
+  staleDaysDesc: string;
+  pileSizeName: string;
+  pileSizeDesc: string;
+  themeName: string;
+  themeAuto: string;
+  themeLight: string;
+  themeDark: string;
+  accentName: string;
+  accentDesc: string;
+  excludeName: string;
+  excludeDesc: string;
+  excludeSelect: string;
+  excludeRemove: string;
+  logPathName: string;
+  logPathDesc: string;
+  logHeader: string;
+  historyName: string;
+  historyTotal: string;
+  historyEmpty: string;
 }
 
 export const STRINGS: Record<Lang, Strings> = {
@@ -181,6 +321,35 @@ export const STRINGS: Record<Lang, Strings> = {
     batchSizeName: "Batch size",
     minDegreeName: "Minimum degree",
     minDegreeDesc: "Notes below this link count are never surfaced.",
+    openMountain: "Open the clutter mountain",
+    mountainTitle: "Katazuke — clutter mountain",
+    mountainEmpty: "All tidy. Nothing left to confront.",
+    mountainCleared: "Pile cleared — {n} still wait. Click for the next pile.",
+    staleDaysName: "Clutter age (days)",
+    staleDaysDesc:
+      "Orphan notes untouched for at least this many days form the mountain.",
+    pileSizeName: "Pile size",
+    pileSizeDesc:
+      "How many notes one pile holds. Keep it small enough to finish in one sitting.",
+    themeName: "Mountain colors",
+    themeAuto: "Match Obsidian",
+    themeLight: "Light",
+    themeDark: "Dark",
+    accentName: "Use accent color",
+    accentDesc:
+      "Draw the suggested notes in your Obsidian accent color instead of crimson.",
+    excludeName: "Excluded folders",
+    excludeDesc:
+      "Notes under these folders never enter the mountain or the candidates.",
+    excludeSelect: "Choose a folder to add…",
+    excludeRemove: "Remove",
+    logPathName: "Log file",
+    logPathDesc:
+      "One line is appended here per tidied note. It lives in your vault, so it syncs across devices as the single source of truth.",
+    logHeader: "# katazuke log — one line per tidied note",
+    historyName: "Tidying history",
+    historyTotal: "{n} notes tidied so far",
+    historyEmpty: "No history yet — topple a pile and the trail appears here.",
   },
   ja: {
     confrontOne: "一件と向き合う",
@@ -198,5 +367,30 @@ export const STRINGS: Record<Lang, Strings> = {
     batchSizeName: "数件モードの件数",
     minDegreeName: "最小次数",
     minDegreeDesc: "この次数未満のノートは候補にしない。",
+    openMountain: "たまりの山を開く",
+    mountainTitle: "片づけ — たまりの山",
+    mountainEmpty: "片付いた。向き合う対象はもうない。",
+    mountainCleared: "一山片付いた。残り {n} 粒。クリックで次の山。",
+    staleDaysName: "たまりとみなす放置日数",
+    staleDaysDesc: "孤立していて、この日数以上触っていないノートが山になる。",
+    pileSizeName: "一山の粒数",
+    pileSizeDesc: "一度の片づけで向き合う量。一回で崩し切れる大きさに保つ。",
+    themeName: "山の配色",
+    themeAuto: "Obsidianに合わせる",
+    themeLight: "ライト",
+    themeDark: "ダーク",
+    accentName: "アクセントカラーを使う",
+    accentDesc: "判定候補の粒を、紅色でなくObsidianのアクセントカラーで描く。",
+    excludeName: "対象外フォルダー",
+    excludeDesc: "このフォルダー配下のノートは山にも候補にも含めない。",
+    excludeSelect: "フォルダーを選んで追加…",
+    excludeRemove: "除外を解除",
+    logPathName: "記録ファイル",
+    logPathDesc:
+      "片付けた1件ごとに1行追記する。保存庫内のファイルなので端末間で同期され、これが軌跡の原本になる。",
+    logHeader: "# katazuke 片付けの記録 — 1行が片付けた1件",
+    historyName: "片付けの軌跡",
+    historyTotal: "これまでに {n} 粒片付けた",
+    historyEmpty: "まだ記録がない。山を崩すとここに軌跡が描かれる。",
   },
 };

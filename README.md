@@ -45,6 +45,24 @@ Click a result to open it in place (the modal closes). Cmd/Ctrl+click opens it
 in a new tab and keeps the modal open, so you can keep triaging — the same
 gesture as a browser.
 
+## The clutter mountain
+
+A second lens for the opposite failure: notes connected to *nothing* that have
+sat untouched. `Open the clutter mountain` (or the ribbon mountain icon) opens
+a small pane in the right sidebar.
+
+- Orphan notes untouched past a threshold (default 90 days) stack up as grains
+  of a sand mound; the older a grain, the darker it sinks toward the core.
+- One pile holds `Pile size` notes (default 10) — one sitting's worth, drawn
+  from the dustiest corner of the vault, so a session actually finishes.
+- Click a grain to judge it: the note opens beside the mountain without
+  stealing focus, the grain puffs away, grains above it fall, and steep slopes
+  topple. Accent-colored grains are "start here" suggestions.
+- Topple the whole pile and a click raises the next one.
+- Every judgment appends one line to a log file in your vault, and Settings
+  shows your tidying history — total plus a 30-day bar chart. The vault file is
+  the source of truth, so the trail continues across synced devices.
+
 ## Settings
 
 | Setting | Default | Meaning |
@@ -53,6 +71,12 @@ gesture as a browser.
 | Freshness half-life (days) | `90` | After this many days untouched, a note's score doubles. |
 | Batch size | `7` | How many notes "Confront several" shows. |
 | Minimum degree | `5` | Notes below this link count are never surfaced. |
+| Pile size | `10` | How many notes one mountain pile holds. |
+| Clutter age (days) | `90` | Orphan notes untouched this long form the mountain. |
+| Mountain colors | Match Obsidian | Follow the theme, or force light/dark paper. |
+| Use accent color | off | Draw suggested grains in your Obsidian accent color. |
+| Excluded folders | — | Notes under these folders never enter the mountain or the candidates. |
+| Log file | `katazuke-log.md` | Tidying history — one appended line per judged note. |
 
 Requires Obsidian 1.8.7 or newer.
 
@@ -80,15 +104,17 @@ Settings → Community plugins.
 
 ## What it accesses
 
-Katazuke is read-only and works entirely offline.
+Katazuke works entirely offline.
 
 - Reads the paths of every note in the vault, the resolved link graph, each
-  note's last-modified time, and note tags — all needed to score notes by
-  degree and freshness.
+  note's last-modified time, and note tags — all needed for scoring and for the
+  mountain.
 - Makes no network requests. Nothing leaves your vault.
-- Does not read or write the clipboard, and never modifies your notes.
-- The only data it writes is its own settings, through Obsidian's plugin data
-  API.
+- Does not read or write the clipboard, and never modifies your existing notes.
+- Writes exactly two things: its own settings (through Obsidian's plugin data
+  API), and — only when you judge a note in the clutter mountain — one appended
+  line to the tidying log file in your vault (default `katazuke-log.md`,
+  configurable).
 
 ## Development
 
